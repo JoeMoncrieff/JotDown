@@ -1,22 +1,19 @@
 import React from 'react';
 import {io} from "socket.io-client";
-import {useState, useEffect} from "react";
-import JotterSidebarItem from './JotterSidebarItem';
+import { useState, useEffect, useReducer } from "react";
 
-export default function JotterSideBar(){
+//Router imports
+import {
+  BrowserRouter as Router,
+  Link 
+} from "react-router-dom"
+
+export default function JotterSideBar(props){
 //Things we need to do for the sidebar.
 
   //Connect to socket.io
   const [socket, setSocket] = useState();
   const [jotters, setJotters] = useState([]);
-
-  //This is a function that adds a document to the list
-  const addJotter = jotter => {
-    const newJotters = [jotter, ...jotters];
-
-    setJotters(newJotters);
-    console.log('added jotter: ' + jotter[0])
-  };
 
 
   useEffect(() =>
@@ -30,28 +27,62 @@ export default function JotterSideBar(){
   },[])
   //Access all the current existing document ids
 
+  //This is a function that adds a document to the list
+  
+
+  // This force update is needed for some reason.
+  const [, forceUpdate] = useReducer(x => x + 1, 0);
+
+  function fupdate() {
+    forceUpdate();
+  }
+
+
   useEffect(() => {
-    console.log('useEffect called')
-    if (socket == null) return
+    const addJotter = jotter => {
+      const newJotters = jotters;
+      const endNo = newJotters.push(jotter)
 
-    socket.on('get-sidebar', jotters => {
-      console.log('received info:\n' + jotters[0] )
-      for (let i = 0; i < jotters.length; i++){
-        //Todo make sure a file isn't displayed twice
-        addJotter(jotters[i])
+      //console.log('newJotters: ' + newJotters)
 
+      setJotters(newJotters);
+      //console.log('added jotter: ' + jotters[endNo - 1])
+      fupdate()
+    };
+    //console.log('useEffect called')
+      if (socket == null) return
+
+    socket.on('get-sidebar', nJotters => {
+      //console.log('received info:\n' )
+      for (let i = 0; i < nJotters.length; i++){
+          //Todo make sure a file isn't displayed twice
+          //console.log('calling addJotter on: ' + nJotters[i][0]);
+          addJotter(nJotters[i][0])
       }
     });
-
-  },[socket])
+  }, [socket, jotters])
 
   //Display them as widgets on the side
 
+
   return (
-    <div className="sidebar_container">
-      <div className="menu_box">
-        <h2>Menu</h2>
+    <Router>
+      <div className="sidebar-container">
+        <div className="menu-box">
+          <h2>Menu</h2>
+        </div>
+        <ul className="jotter-list-nav">
+          {jotters.map((j, i) => (
+            <li key={i} className={"/documents/" + j === window.location.pathname ? "Selected" : "Unselected"}>
+              <Link to={`/documents/${j}`}>
+                <button className="jotter-sidebar-button" onClick={() => window.location.assign("http://localhost:3000/documents/" + j)}>
+                  {j}
+                </button>
+            </Link>
+            </li>
+          ))}
+        </ul>
       </div>
-      <JotterSidebarItem jotters={jotters}/>
-    </div>);
+    </Router>
+  );
 }

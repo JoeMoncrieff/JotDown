@@ -2,8 +2,8 @@ import React from 'react'
 import "quill/dist/quill.snow.css"
 import Quill from "quill"
 import {useEffect, useCallback, useState} from "react"
-import {io} from "socket.io-client"
-import {useParams} from 'react-router-dom'
+import { io } from "socket.io-client"
+import { useParams, useLocation } from 'react-router-dom'
 import JotterSidebar from './JotterSidebar'
 
 // Setting up what we want on our toolbarOptions
@@ -23,11 +23,16 @@ var toolbarOptions = [
 
 const SAVE_INTERVAL_MS = 2000
 
-export default function TextEditor()
-{
-  const {id: documentid} = useParams()
+export default function TextEditor(props) {
+  const { id: documentid } = useParams()
+
   const [socket, setSocket] = useState()
   const [quill, setQuill] = useState()
+  const location = useLocation()
+
+  useEffect(() => {
+    console.log("location changed: " + location.pathname)
+  }, [location.pathname])
 
 
   useEffect(() =>
